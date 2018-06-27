@@ -1,0 +1,18 @@
+# Uncomment to enable vi-like command line editing mode
+# set editing-mode vi 
+
+# Allow up/down autocompletion of partially typed commands from bash history
+# From: coderwall.com/p/oqtj8w
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+
+# Use case-insensitive TAB autocompletion
+set completion-ignore-case on
+
+# Auto list all tab completions (use instead of TAB-cycling)
+# set show-all-if-ambiguous on
+
+# Make TAB cycle through possible completions
+"\t": menu-complete
+# Make SHIFT-TAB reverse cycle through possible completions
+"\e[Z": "\e-1\C-i"
