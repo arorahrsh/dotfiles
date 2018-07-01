@@ -1,11 +1,7 @@
-## Colorize the ls output
-alias ls='ls --color=auto'
  
-## Show all files (including hidden ones)
-alias la='ls -a'
- 
-## Show hidden files
-alias l.='ls -d .* --color=auto'
+alias l.='ls -d .*' # Show hidden files only
+alias la='ls -a'    # Show all files (including hidden ones)
+alias ll='ls -l -h' # Show files in listed human readable format
 
 # Easier navigation: .., ..., ...., ~ and -
 alias "cd.."="cd .."
