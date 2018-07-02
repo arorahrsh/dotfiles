@@ -20,6 +20,9 @@ alias dt="cd ~/Desktop"
 alias g="git"
 alias gitinspect='~/Downloads/gitinspector/gitinspector.py -r --grading --format=htmlembedded --file-types=** > inspection.html'
 
+# Tmux
+alias t4="tmux new-session \; split-window -h \;  split-window -v -t 1 \;  split-window -v -t 2"
+
 # Misc
 alias path='echo -e ${PATH//:/\\n}'
 
