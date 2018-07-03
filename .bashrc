@@ -28,7 +28,7 @@ if ! shopt -oq posix; then
 fi
 
 # Load the shell dotfiles
-for file in ~/.{bash_prompt,aliases}; do
+for file in ~/.bash_{prompt,aliases}; do
     [ -r "$file" ] && [ -f "$file" ] && source "$file";
 done;
 unset file;
