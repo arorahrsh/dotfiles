@@ -31,6 +31,7 @@
     st = status
     df = diff
     dfi = diff --staged
+    cl = clone
     br = branch
     ch = checkout
     sh = stash
