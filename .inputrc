@@ -10,9 +10,22 @@
 set completion-ignore-case on
 
 # Auto list all tab completions (use instead of TAB-cycling)
-# set show-all-if-ambiguous on
+set show-all-if-ambiguous on
+
+# Show all autocomplete results at once
+set page-completions off
+
+# If there are more than 100 possible completions for a word, ask to show them all
+set completion-query-items 100
+
+# Be more intelligent when autocompleting by also looking at the text after
+# the cursor. For example, when the current line is "cd ~/src/mozil", and
+# the cursor is on the "z", pressing Tab will not autocomplete it to "cd
+# ~/src/mozillail", but to "cd ~/src/mozilla". (This is supported by the
+# Readline used by Bash 4.)
+set skip-completed-text on
 
 # Make TAB cycle through possible completions
-"\t": menu-complete
+#"\t": menu-complete
 # Make SHIFT-TAB reverse cycle through possible completions
-"\e[Z": "\e-1\C-i"
+#"\e[Z": "\e-1\C-i"
