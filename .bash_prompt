@@ -5,6 +5,21 @@ elif infocmp xterm-256color >/dev/null 2>&1; then
 	export TERM='xterm-256color';
 fi;
 
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)";
+    alias ls='ls --color=auto';
+    #alias dir='dir --color=auto';
+    #alias vdir='vdir --color=auto';
+
+    alias grep='grep --color=auto';
+    alias fgrep='fgrep --color=auto';
+    alias egrep='egrep --color=auto';
+fi;
+
+# colored GCC warnings and errors
+#export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+
 prompt_git() {
 	local s='';
 	local branchName='';
@@ -69,26 +84,22 @@ white="\e[1;37m";
 yellow="\e[1;33m";
 
 
-# --------------------------------------------------------
-# | PS1 - Default interactive prompt                     |
-# --------------------------------------------------------
+# =========== PS1 - Default interactive prompt ===========
 
 # Set the terminal title and prompt.
 PS1="\[\033]0;\W\007\]"; # working directory base name
-PS1+="\[${bold}\]\n";    # newline
+#PS1+="\[${bold}\]\n";    # newline
 PS1+="\[${green}\]\u";   # username
 PS1+="\[${green}\]@";    # @
 PS1+="\[${green}\]\h";   # host
 PS1+="\[${white}:\] ";   # :
 PS1+="\[${blue}\]\w";    # working directory full path
-PS1+="\$(prompt_git \"\[${white}\] on \[${violet}\]\" \"\[${violet}\]\")"; # Git repository details (E.g. "master on [!?]")
+PS1+="\$(prompt_git \"\[${white}\] on \[${violet}\]\" \"\[${violet}\]\")"; # Git repository details (e.g. "master on [!?]")
 PS1+="\n";
 PS1+="\[${white}\]\$ \[${reset}\]"; # `$` (and reset color)
 export PS1;
 
-# --------------------------------------------------------
-# | PS2 - Continuation interactive prompt                |
-# --------------------------------------------------------
+# ========= PS2 - Continuation interactive prompt ========
 
 PS2="\[${yellow}\]→ \[${reset}\]";
 export PS2;
