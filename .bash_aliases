@@ -2,6 +2,7 @@
 alias l.='ls -d .*' # Show hidden files only
 alias la='ls -a'    # Show all files (including hidden ones)
 alias ll='ls -l -h' # Show files in listed human readable format
+alias ldir='ls -d */' # Show directories only in current path
 
 # Easier navigation: .., ..., ...., ~ and -
 alias "cd.."="cd .."
@@ -15,6 +16,7 @@ alias -- -="cd -"
 alias doc="cd ~/Documents"
 alias dl="cd ~/Downloads"
 alias dt="cd ~/Desktop"
+alias dotf="cd ~/.dotfiles"
 
 # Git
 alias g="git"
