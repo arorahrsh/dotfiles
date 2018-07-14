@@ -43,7 +43,6 @@
     cmt = commit --verbose
     acmt = commit -av
     ecmt = !git add . && git commit -m "." # Commit everything with a . message
-    ecmtph = !git ecmt && git push         # ... And push
 
     # Push/Pull
     pl = pull

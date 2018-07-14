@@ -19,6 +19,9 @@ Plugin 'chriskempson/base16-vim'
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 
+" Markdown
+"Plugin 'JamshedVesuna/vim-markdown-preview' 
+
 call vundle#end()
 
 
@@ -86,3 +89,8 @@ cnoreabbrev W w
 cnoreabbrev Q q
 cnoreabbrev Wq wq
 cnoreabbrev WQ wq
+
+" ================ Plugin Config ====================
+
+"vim-markdown-preview
+"let vim_markdown_preview_github=1
