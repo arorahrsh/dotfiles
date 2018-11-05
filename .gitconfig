@@ -41,6 +41,7 @@
     a = add
     cm = commit -m
     cmt = commit --verbose
+    camend = commit --amend
     acmt = commit -av
     ecmt = !git add . && git commit -m "." # Commit everything with a . message
 
