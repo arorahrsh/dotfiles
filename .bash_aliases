@@ -1,4 +1,4 @@
- 
+alias fxpac='/usr/local/tools/fix-pac' 
 alias l.='ls -d .*' # Show hidden files only
 alias la='ls -a'    # Show all files (including hidden ones)
 alias ll='ls -l -h' # Show files in listed human readable format

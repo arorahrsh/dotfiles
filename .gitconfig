@@ -1,9 +1,10 @@
 [user]
-    name = arorahrsh
-    email = nullpointerexception07@gmail.com
+    name = Hrshikesh Arora
+    email = Hrshikesh_Arora@bnz.co.nz
 
 [core]
     editor = vim
+    autocrlf = input
 
 [color]
     # Use colors in Git commands that are capable of colored output when
@@ -52,4 +53,4 @@
     ppush = !git pull --rebase && git push
 
 [credential]
-	helper = cache --timeout=3600
+    helper = cache --timeout=3600
