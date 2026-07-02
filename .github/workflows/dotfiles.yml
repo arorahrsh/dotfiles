@@ -1,0 +1,192 @@
+name: Dotfiles CI
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dotfiles-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install:
+    name: Install on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Ensure required tools are installed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! command -v git >/dev/null 2>&1 || ! command -v vim >/dev/null 2>&1; then
+            case "$RUNNER_OS" in
+              Linux)
+                sudo apt-get update
+                sudo apt-get install -y git vim
+                ;;
+              macOS)
+                brew update
+                command -v git >/dev/null 2>&1 || brew install git
+                command -v vim >/dev/null 2>&1 || brew install vim
+                ;;
+              *)
+                echo "Unsupported runner OS: $RUNNER_OS"
+                exit 1
+                ;;
+            esac
+          fi
+
+      - name: Show runner tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          uname -a
+          bash --version | head -n 1
+          git --version
+          vim --version | head -n 1
+
+      - name: Validate Bash syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in install.sh .bashrc .bash_profile .bash_prompt .bash_aliases; do
+            bash -n "$file"
+          done
+
+      - name: Install dotfiles into isolated HOME
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test_home="$RUNNER_TEMP/dotfiles-home"
+          rm -rf "$test_home"
+          mkdir -p "$test_home"
+
+          HOME="$test_home" INSTALL_VIM_PLUGINS=0 ./install.sh
+
+          expected=(
+            .bash_aliases
+            .bash_profile
+            .bash_prompt
+            .bashrc
+            .git-completion.bash
+            .gitconfig
+            .inputrc
+            .tmux.conf
+            .vimrc
+          )
+
+          for file in "${expected[@]}"; do
+            target="$test_home/$file"
+            source="$GITHUB_WORKSPACE/$file"
+
+            if [ ! -L "$target" ]; then
+              echo "$target is not a symlink"
+              exit 1
+            fi
+
+            if [ "$(readlink "$target")" != "$source" ]; then
+              echo "$target does not point to $source"
+              exit 1
+            fi
+          done
+
+      - name: Verify installer idempotency
+        shell: bash
+        run: |
+          set -euo pipefail
+          test_home="$RUNNER_TEMP/dotfiles-home"
+          HOME="$test_home" INSTALL_VIM_PLUGINS=0 ./install.sh
+
+      - name: Verify backups for existing files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test_home="$RUNNER_TEMP/dotfiles-backup-home"
+          rm -rf "$test_home"
+          mkdir -p "$test_home"
+          printf 'old bashrc\n' > "$test_home/.bashrc"
+
+          HOME="$test_home" INSTALL_VIM_PLUGINS=0 ./install.sh
+
+          backup_count="$(find "$test_home/.dotfiles_bkup" -maxdepth 1 -type f -name 'bashrc_*' | wc -l | tr -d ' ')"
+          if [ "$backup_count" != "1" ]; then
+            echo "Expected exactly one bashrc backup, found $backup_count"
+            find "$test_home" -maxdepth 3 -print
+            exit 1
+          fi
+
+          if [ ! -L "$test_home/.bashrc" ]; then
+            echo "Expected .bashrc to be replaced with a symlink"
+            exit 1
+          fi
+
+      - name: Verify Bash startup files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test_home="$RUNNER_TEMP/dotfiles-home"
+
+          HOME="$test_home" bash --noprofile --norc -c 'source "$HOME/.bashrc"'
+          HOME="$test_home" bash --noprofile --norc -i -c 'source "$HOME/.bashrc"; alias g; type prompt_git' </dev/null
+
+      - name: Verify sourced installer reloads Bash config
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          source_home="$RUNNER_TEMP/dotfiles-source-home"
+          rm -rf "$source_home"
+          mkdir -p "$source_home"
+
+          HOME="$source_home" INSTALL_VIM_PLUGINS=0 bash --noprofile --norc -c 'source ./install.sh; alias g; type prompt_git >/dev/null'
+
+      - name: Verify Vim config loads
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test_home="$RUNNER_TEMP/dotfiles-home"
+          mkdir -p "$test_home/.vim/bundle"
+          git clone --depth 1 https://github.com/VundleVim/Vundle.vim.git "$test_home/.vim/bundle/Vundle.vim"
+
+          HOME="$test_home" vim -Nu "$test_home/.vimrc" -n -es +'syntax on' +qall
+
+      - name: Verify full install with Vim plugins
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          full_home="$RUNNER_TEMP/dotfiles-full-home"
+          rm -rf "$full_home"
+          mkdir -p "$full_home"
+
+          HOME="$full_home" ./install.sh
+
+          for plugin in Vundle.vim gruvbox base16-vim vim-airline vim-airline-themes; do
+            if [ ! -d "$full_home/.vim/bundle/$plugin" ]; then
+              echo "Expected Vim plugin directory missing: $plugin"
+              find "$full_home/.vim" -maxdepth 3 -type d -print
+              exit 1
+            fi
+          done
