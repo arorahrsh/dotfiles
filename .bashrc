@@ -16,15 +16,35 @@ shopt -s checkwinsize
 # Autocorrect typos in path names when using `cd`
 shopt -s cdspell;
 
+_dotfiles_source_first() {
+    local file
+
+    for file in "$@"; do
+        if [ -r "$file" ] && [ -f "$file" ]; then
+            source "$file"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+if command -v brew >/dev/null 2>&1; then
+    _dotfiles_brew_prefix="$(brew --prefix 2>/dev/null)"
+else
+    _dotfiles_brew_prefix=""
+fi
+
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
 # sources /etc/bash.bashrc).
 if ! shopt -oq posix; then
-  if [ -f /usr/share/bash-completion/bash_completion ]; then
-    . /usr/share/bash-completion/bash_completion
-  elif [ -f /etc/bash_completion ]; then
-    . /etc/bash_completion
-  fi
+    _dotfiles_source_first \
+        /usr/share/bash-completion/bash_completion \
+        /etc/bash_completion \
+        "${_dotfiles_brew_prefix}/etc/profile.d/bash_completion.sh" \
+        /opt/homebrew/etc/profile.d/bash_completion.sh \
+        /usr/local/etc/profile.d/bash_completion.sh
 fi
 
 # Load the shell dotfiles
@@ -34,9 +54,23 @@ done;
 unset file;
 
 # Allow completion for git commands
-if [ -f ~/.git-completion.bash ]; then
-    source ~/.git-completion.bash
+if ! declare -F __git_complete >/dev/null 2>&1; then
+    _dotfiles_source_first \
+        "${_dotfiles_brew_prefix}/etc/bash_completion.d/git-completion.bash" \
+        /opt/homebrew/etc/bash_completion.d/git-completion.bash \
+        /usr/local/etc/bash_completion.d/git-completion.bash \
+        /usr/share/bash-completion/completions/git \
+        /usr/share/git/completion/git-completion.bash
 fi
 
 # Enable tab completion for `g` by marking it as an alias for `git`
-__git_complete g __git_main
+if declare -F __git_complete >/dev/null 2>&1; then
+    if declare -F __git_main >/dev/null 2>&1; then
+        __git_complete g __git_main
+    elif declare -F _git >/dev/null 2>&1; then
+        __git_complete g _git
+    fi
+fi
+
+unset _dotfiles_brew_prefix
+unset -f _dotfiles_source_first

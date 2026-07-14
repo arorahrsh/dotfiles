@@ -63,7 +63,6 @@ main() {
         bash_profile
         bash_prompt
         bashrc
-        git-completion.bash
         gitconfig
         inputrc
         tmux.conf

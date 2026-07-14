@@ -36,23 +36,20 @@ jobs:
         run: |
           set -euo pipefail
 
-          if ! command -v git >/dev/null 2>&1 || ! command -v vim >/dev/null 2>&1; then
-            case "$RUNNER_OS" in
-              Linux)
-                sudo apt-get update
-                sudo apt-get install -y git vim
-                ;;
-              macOS)
-                brew update
-                command -v git >/dev/null 2>&1 || brew install git
-                command -v vim >/dev/null 2>&1 || brew install vim
-                ;;
-              *)
-                echo "Unsupported runner OS: $RUNNER_OS"
-                exit 1
-                ;;
-            esac
-          fi
+          case "$RUNNER_OS" in
+            Linux)
+              sudo apt-get update
+              sudo apt-get install -y bash-completion git vim
+              ;;
+            macOS)
+              brew list git >/dev/null 2>&1 || brew install git
+              command -v vim >/dev/null 2>&1 || brew install vim
+              ;;
+            *)
+              echo "Unsupported runner OS: $RUNNER_OS"
+              exit 1
+              ;;
+          esac
 
       - name: Show runner tools
         shell: bash
@@ -87,7 +84,6 @@ jobs:
             .bash_profile
             .bash_prompt
             .bashrc
-            .git-completion.bash
             .gitconfig
             .inputrc
             .tmux.conf
@@ -148,7 +144,7 @@ jobs:
           test_home="$RUNNER_TEMP/dotfiles-home"
 
           HOME="$test_home" bash --noprofile --norc -c 'source "$HOME/.bashrc"'
-          HOME="$test_home" bash --noprofile --norc -i -c 'source "$HOME/.bashrc"; alias g; type prompt_git' </dev/null
+          HOME="$test_home" bash --noprofile --norc -i -c 'source "$HOME/.bashrc"; alias g; type prompt_git; declare -F __git_complete >/dev/null; complete -p g >/dev/null' </dev/null
 
       - name: Verify sourced installer reloads Bash config
         shell: bash
@@ -159,7 +155,7 @@ jobs:
           rm -rf "$source_home"
           mkdir -p "$source_home"
 
-          HOME="$source_home" INSTALL_VIM_PLUGINS=0 bash --noprofile --norc -c 'source ./install.sh; alias g; type prompt_git >/dev/null'
+          HOME="$source_home" INSTALL_VIM_PLUGINS=0 bash --noprofile --norc -c 'source ./install.sh; alias g; type prompt_git >/dev/null; declare -F __git_complete >/dev/null; complete -p g >/dev/null'
 
       - name: Verify Vim config loads
         shell: bash
