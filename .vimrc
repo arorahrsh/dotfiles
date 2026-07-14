@@ -79,10 +79,10 @@ set wrapscan
 set wildignore+=output,dist,bower_components,build,.git,node_modules,_book
 
 " Get off my lawn
-nnoremap <Left> :echoe "Use h"<CR>
-nnoremap <Right> :echoe "Use l"<CR>
-nnoremap <Up> :echoe "Use k"<CR>
-nnoremap <Down> :echoe "Use j"<CR>
+nnoremap <Left> :echo "Use h"<CR>
+nnoremap <Right> :echo "Use l"<CR>
+nnoremap <Up> :echo "Use k"<CR>
+nnoremap <Down> :echo "Use j"<CR>
 
 " Don't care about accidental capitalisation
 cnoreabbrev W w
