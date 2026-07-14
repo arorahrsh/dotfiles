@@ -30,7 +30,7 @@ _dotfiles_source_first() {
 }
 
 if command -v brew >/dev/null 2>&1; then
-    _dotfiles_brew_prefix="$(brew --prefix 2>/dev/null)"
+    _dotfiles_brew_prefix="$(brew --prefix 2>/dev/null || true)"
 else
     _dotfiles_brew_prefix=""
 fi
@@ -44,7 +44,8 @@ if ! shopt -oq posix; then
         /etc/bash_completion \
         "${_dotfiles_brew_prefix}/etc/profile.d/bash_completion.sh" \
         /opt/homebrew/etc/profile.d/bash_completion.sh \
-        /usr/local/etc/profile.d/bash_completion.sh
+        /usr/local/etc/profile.d/bash_completion.sh \
+        || true
 fi
 
 # Load the shell dotfiles
@@ -57,10 +58,16 @@ unset file;
 if ! declare -F __git_complete >/dev/null 2>&1; then
     _dotfiles_source_first \
         "${_dotfiles_brew_prefix}/etc/bash_completion.d/git-completion.bash" \
+        "${_dotfiles_brew_prefix}/opt/git/etc/bash_completion.d/git-completion.bash" \
         /opt/homebrew/etc/bash_completion.d/git-completion.bash \
+        /opt/homebrew/opt/git/etc/bash_completion.d/git-completion.bash \
         /usr/local/etc/bash_completion.d/git-completion.bash \
+        /usr/local/opt/git/etc/bash_completion.d/git-completion.bash \
         /usr/share/bash-completion/completions/git \
-        /usr/share/git/completion/git-completion.bash
+        /usr/share/git/completion/git-completion.bash \
+        /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash \
+        /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-completion.bash \
+        || true
 fi
 
 # Enable tab completion for `g` by marking it as an alias for `git`
