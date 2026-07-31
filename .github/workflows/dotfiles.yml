@@ -105,12 +105,54 @@ jobs:
             fi
           done
 
+          if [ -e "$test_home/.gitconfig.local" ]; then
+            echo "Non-interactive installation should not create .gitconfig.local"
+            exit 1
+          fi
+
       - name: Verify installer idempotency
         shell: bash
         run: |
           set -euo pipefail
           test_home="$RUNNER_TEMP/dotfiles-home"
           HOME="$test_home" INSTALL_VIM_PLUGINS=0 ./install.sh
+
+      - name: Verify Git identity configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          identity_home="$RUNNER_TEMP/dotfiles-identity-home"
+          rm -rf "$identity_home"
+          mkdir -p "$identity_home"
+
+          HOME="$identity_home" GIT_IDENTITY_NAME="Dotfiles CI" GIT_IDENTITY_EMAIL="dotfiles-ci@example.invalid" INSTALL_VIM_PLUGINS=0 ./install.sh
+          git config --file "$identity_home/.gitconfig.local" --get user.name | grep -Fx "Dotfiles CI"
+          git config --file "$identity_home/.gitconfig.local" --get user.email | grep -Fx "dotfiles-ci@example.invalid"
+
+          existing_home="$RUNNER_TEMP/dotfiles-existing-identity-home"
+          rm -rf "$existing_home"
+          mkdir -p "$existing_home"
+          git config --file "$existing_home/.gitconfig.local" user.name "Existing User"
+          git config --file "$existing_home/.gitconfig.local" user.email "existing@example.invalid"
+
+          HOME="$existing_home" INSTALL_VIM_PLUGINS=0 ./install.sh
+          git config --file "$existing_home/.gitconfig.local" --get user.name | grep -Fx "Existing User"
+          git config --file "$existing_home/.gitconfig.local" --get user.email | grep -Fx "existing@example.invalid"
+
+          partial_home="$RUNNER_TEMP/dotfiles-partial-identity-home"
+          rm -rf "$partial_home"
+          mkdir -p "$partial_home"
+
+          if HOME="$partial_home" GIT_IDENTITY_NAME="Incomplete User" INSTALL_VIM_PLUGINS=0 ./install.sh; then
+            echo "Expected incomplete Git identity configuration to fail"
+            exit 1
+          fi
+
+          if [ -e "$partial_home/.gitconfig.local" ]; then
+            echo "Incomplete Git identity configuration created .gitconfig.local"
+            exit 1
+          fi
 
       - name: Verify backups for existing files
         shell: bash

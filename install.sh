@@ -44,6 +44,64 @@ file_header() {
     printf '\033[1;35m[%s]\033[0m\n' "$1"
 }
 
+configure_git_identity() {
+    local local_gitconfig="$HOME/.gitconfig.local"
+    local configured_name
+    local configured_email
+    local default_name
+    local default_email
+    local input_name
+    local input_email
+
+    if [ -n "${GIT_IDENTITY_NAME:-}" ] || [ -n "${GIT_IDENTITY_EMAIL:-}" ]; then
+        if [ -z "${GIT_IDENTITY_NAME:-}" ] || [ -z "${GIT_IDENTITY_EMAIL:-}" ]; then
+            echo "GIT_IDENTITY_NAME and GIT_IDENTITY_EMAIL must be set together"
+            return 1
+        fi
+
+        configured_name="$GIT_IDENTITY_NAME"
+        configured_email="$GIT_IDENTITY_EMAIL"
+    else
+        configured_name="$(git config --file "$local_gitconfig" --get user.name 2>/dev/null || true)"
+        configured_email="$(git config --file "$local_gitconfig" --get user.email 2>/dev/null || true)"
+
+        if [ -n "$configured_name" ] && [ -n "$configured_email" ]; then
+            info "Keeping existing Git identity in $local_gitconfig"
+            return 0
+        fi
+
+        if [ ! -t 0 ]; then
+            info "Skipping Git identity setup in a non-interactive shell"
+            return 0
+        fi
+
+        default_name="${configured_name:-$(git config --file "$HOME/.gitconfig" --no-includes --get user.name 2>/dev/null || true)}"
+        default_email="${configured_email:-$(git config --file "$HOME/.gitconfig" --no-includes --get user.email 2>/dev/null || true)}"
+
+        if ! IFS= read -r -p "Git user name${default_name:+ [$default_name]}: " input_name; then
+            echo "Unable to read Git user name"
+            return 1
+        fi
+
+        if ! IFS= read -r -p "Git user email${default_email:+ [$default_email]}: " input_email; then
+            echo "Unable to read Git user email"
+            return 1
+        fi
+
+        configured_name="${input_name:-$default_name}"
+        configured_email="${input_email:-$default_email}"
+
+        if [ -z "$configured_name" ] || [ -z "$configured_email" ]; then
+            echo "Git user name and email cannot be empty"
+            return 1
+        fi
+    fi
+
+    git config --file "$local_gitconfig" user.name "$configured_name"
+    git config --file "$local_gitconfig" user.email "$configured_email"
+    info "Configured Git identity in $local_gitconfig"
+}
+
 main() {
     local sourcedir
     local targetdir
@@ -108,6 +166,8 @@ main() {
         printf '\n'
     done
 
+    configure_git_identity || return 1
+
     if [ "${INSTALL_VIM_PLUGINS:-1}" = "1" ]; then
         command -v git >/dev/null 2>&1 || {
             echo "git is required to install Vundle"
@@ -157,7 +217,7 @@ unset original_shell_options
 if [ "$is_sourced" -eq 1 ]; then
     return_status="$status"
     unset is_sourced status
-    unset -f canonical_path info file_header main
+    unset -f canonical_path info file_header configure_git_identity main
     return "$return_status"
 fi
 
