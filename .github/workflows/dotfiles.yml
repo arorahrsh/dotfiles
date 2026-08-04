@@ -129,6 +129,8 @@ jobs:
           HOME="$identity_home" GIT_IDENTITY_NAME="Dotfiles CI" GIT_IDENTITY_EMAIL="dotfiles-ci@example.invalid" INSTALL_VIM_PLUGINS=0 ./install.sh
           git config --file "$identity_home/.gitconfig.local" --get user.name | grep -Fx "Dotfiles CI"
           git config --file "$identity_home/.gitconfig.local" --get user.email | grep -Fx "dotfiles-ci@example.invalid"
+          HOME="$identity_home" git config --global --get user.name | grep -Fx "Dotfiles CI"
+          HOME="$identity_home" git config --global --get user.email | grep -Fx "dotfiles-ci@example.invalid"
 
           existing_home="$RUNNER_TEMP/dotfiles-existing-identity-home"
           rm -rf "$existing_home"
@@ -139,6 +141,8 @@ jobs:
           HOME="$existing_home" INSTALL_VIM_PLUGINS=0 ./install.sh
           git config --file "$existing_home/.gitconfig.local" --get user.name | grep -Fx "Existing User"
           git config --file "$existing_home/.gitconfig.local" --get user.email | grep -Fx "existing@example.invalid"
+          HOME="$existing_home" git config --global --get user.name | grep -Fx "Existing User"
+          HOME="$existing_home" git config --global --get user.email | grep -Fx "existing@example.invalid"
 
           partial_home="$RUNNER_TEMP/dotfiles-partial-identity-home"
           rm -rf "$partial_home"
