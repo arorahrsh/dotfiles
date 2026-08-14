@@ -110,6 +110,30 @@ jobs:
             exit 1
           fi
 
+      - name: Verify installer failure handling
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          readonly_home="$RUNNER_TEMP/dotfiles-readonly-home"
+          rm -rf "$readonly_home"
+          mkdir -p "$readonly_home"
+          chmod u-w "$readonly_home"
+
+          if HOME="$readonly_home" INSTALL_VIM_PLUGINS=0 ./install.sh; then
+            chmod u+w "$readonly_home"
+            echo "Expected installation into a read-only HOME to fail"
+            exit 1
+          fi
+
+          if HOME="$readonly_home" INSTALL_VIM_PLUGINS=0 bash --noprofile --norc -c 'source ./install.sh'; then
+            chmod u+w "$readonly_home"
+            echo "Expected sourced installation into a read-only HOME to fail"
+            exit 1
+          fi
+
+          chmod u+w "$readonly_home"
+
       - name: Verify installer idempotency
         shell: bash
         run: |

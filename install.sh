@@ -11,7 +11,6 @@ if [ "${BASH_SOURCE[0]}" != "$0" ]; then
 fi
 
 original_shell_options="$(set +o)"
-set -euo pipefail
 
 canonical_path() {
     local path="$1"
@@ -97,8 +96,8 @@ configure_git_identity() {
         fi
     fi
 
-    git config --file "$local_gitconfig" user.name "$configured_name"
-    git config --file "$local_gitconfig" user.email "$configured_email"
+    git config --file "$local_gitconfig" user.name "$configured_name" || return 1
+    git config --file "$local_gitconfig" user.email "$configured_email" || return 1
     info "Configured Git identity in $local_gitconfig"
 }
 
@@ -166,7 +165,7 @@ main() {
         printf '\n'
     done
 
-    configure_git_identity || return 1
+    configure_git_identity
 
     if [ "${INSTALL_VIM_PLUGINS:-1}" = "1" ]; then
         command -v git >/dev/null 2>&1 || {
@@ -195,30 +194,35 @@ main() {
         info "Skipping Vim plugin installation"
     fi
 
-    if [ "$is_sourced" -eq 1 ]; then
-        info "Sourcing $HOME/.bashrc into the current shell..."
-        eval "$original_shell_options"
-        # shellcheck source=/dev/null
-        source "$HOME/.bashrc"
-    else
-        info "Dotfiles installed. Open a new shell or run: source $HOME/.bashrc"
-    fi
 }
 
-if main "$@"; then
-    status=0
-else
-    status=$?
-fi
-
-eval "$original_shell_options"
-unset original_shell_options
-
 if [ "$is_sourced" -eq 1 ]; then
+    # Run the install with strict mode without changing the caller's shell options.
+    set +e
+    (
+        set -euo pipefail
+        main "$@"
+    )
+    status=$?
+
+    eval "$original_shell_options"
+
+    if [ "$status" -eq 0 ]; then
+        info "Sourcing $HOME/.bashrc into the current shell..."
+        set +e
+        # shellcheck source=/dev/null
+        source "$HOME/.bashrc"
+        status=$?
+        eval "$original_shell_options"
+    fi
+
+    unset original_shell_options
     return_status="$status"
     unset is_sourced status
     unset -f canonical_path info file_header configure_git_identity main
     return "$return_status"
 fi
 
-exit "$status"
+set -euo pipefail
+main "$@"
+info "Dotfiles installed. Open a new shell or run: source $HOME/.bashrc"
