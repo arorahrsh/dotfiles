@@ -214,6 +214,7 @@ jobs:
           test_home="$RUNNER_TEMP/dotfiles-home"
 
           HOME="$test_home" bash --noprofile --norc -c 'source "$HOME/.bashrc"'
+          TERM=tmux-256color HOME="$test_home" bash --noprofile --norc -c 'source "$HOME/.bash_prompt"; test "$TERM" = "tmux-256color"'
           HOME="$test_home" bash --noprofile --norc -i -c 'source "$HOME/.bashrc"; alias g; type prompt_git; declare -F __git_complete >/dev/null; complete -p g >/dev/null' </dev/null
 
       - name: Verify sourced installer reloads Bash config
