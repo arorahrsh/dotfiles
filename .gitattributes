@@ -1,0 +1,2 @@
+# Keep text files consistent across macOS and Linux.
+* text=auto eol=lf
