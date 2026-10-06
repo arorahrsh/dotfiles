@@ -1,0 +1,7 @@
+/.gitconfig.local
+/.config/zsh/local.zsh
+
+# Generated Zsh files, if a tool puts them in the repository.
+.zcompdump*
+.zsh_history*
+*.zwc
