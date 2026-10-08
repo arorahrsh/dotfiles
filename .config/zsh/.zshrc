@@ -48,6 +48,11 @@ else
 fi
 PROMPT2='%_> '
 
+if [[ ${TERM:-dumb} != dumb ]] && (( $+commands[starship] )); then
+    export STARSHIP_CONFIG="${STARSHIP_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml}"
+    eval "$(starship init zsh)"
+fi
+
 unset _dotfiles_zsh_state _dotfiles_zsh_cache
 
 # Machine-specific overrides take precedence over the shared defaults.

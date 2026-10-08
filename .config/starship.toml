@@ -1,0 +1,40 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+add_newline = false
+format = '$username$hostname$directory$git_branch$git_status$line_break$character'
+
+[username]
+show_always = true
+format = '[$user]($style)'
+style_user = 'green'
+style_root = 'bold red'
+
+[hostname]
+ssh_only = false
+format = '[@$hostname]($style) '
+style = 'yellow'
+
+[directory]
+format = '[$path]($style)[$read_only]($read_only_style) '
+style = 'blue'
+truncation_length = 0
+truncate_to_repo = false
+read_only = ' (read-only)'
+
+[git_branch]
+format = 'on [$branch]($style) '
+style = 'magenta'
+
+[git_status]
+format = '([\[$all_status$ahead_behind\]]($style) )'
+style = 'yellow'
+ahead = 'ahead ${count}'
+behind = 'behind ${count}'
+diverged = 'ahead ${ahead_count}, behind ${behind_count}'
+renamed = 'r'
+deleted = 'x'
+
+[character]
+success_symbol = '[>](bold green)'
+error_symbol = '[>](bold red)'
+vimcmd_symbol = '[<](bold green)'
