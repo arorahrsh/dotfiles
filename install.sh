@@ -5,6 +5,11 @@
 # This script creates symlinks for dotfiles and installs Vundle/Vim plugins
 ############################
 
+if [ -z "${BASH_VERSION:-}" ]; then
+    printf 'Run this installer with Bash: bash ./install.sh\n' >&2
+    return 1 2>/dev/null || exit 1
+fi
+
 is_sourced=0
 if [ "${BASH_SOURCE[0]}" != "$0" ]; then
     is_sourced=1
@@ -12,35 +17,57 @@ fi
 
 original_shell_options="$(set +o)"
 
-canonical_path() {
-    local path="$1"
-    local link
-    local dir
-    local base
-
-    if command -v realpath >/dev/null 2>&1; then
-        realpath "$path" 2>/dev/null && return
-    fi
-
-    if [ -L "$path" ]; then
-        link="$(readlink "$path")"
-        case "$link" in
-            /*) path="$link" ;;
-            *) path="$(dirname "$path")/$link" ;;
-        esac
-    fi
-
-    dir="$(cd -P "$(dirname "$path")" >/dev/null 2>&1 && pwd)"
-    base="$(basename "$path")"
-    printf '%s/%s\n' "$dir" "$base"
-}
-
 info() {
     printf '\033[1;36m%s\033[0m\n' "$1"
 }
 
 file_header() {
     printf '\033[1;35m[%s]\033[0m\n' "$1"
+}
+
+link_dotfile() {
+    local sourcefile="$1"
+    local targetfile="$2"
+    local backupdir="$3"
+    local backupname="$4"
+    local backupbase
+    local backupfile
+    local backup_index=0
+
+    file_header "$sourcefile"
+
+    if [ ! -f "$sourcefile" ]; then
+        echo "-> Missing source file $sourcefile"
+        return 1
+    fi
+
+    mkdir -p "$(dirname "$targetfile")" || return 1
+
+    # A symlinked parent directory can already point at the source file.
+    if [ "$sourcefile" -ef "$targetfile" ]; then
+        echo "-> Already correctly linked to $sourcefile"
+        printf '\n'
+        return 0
+    fi
+
+    if [ -L "$targetfile" ]; then
+        echo "-> Removing existing symlink $targetfile (from $(readlink "$targetfile"))"
+        unlink "$targetfile" || return 1
+    elif [ -e "$targetfile" ]; then
+        mkdir -p "$backupdir" || return 1
+        backupbase="$backupdir/${backupname}_$(date +%Y%m%d_%H%M%S)"
+        backupfile="$backupbase"
+        while [ -e "$backupfile" ] || [ -L "$backupfile" ]; do
+            backup_index=$((backup_index + 1))
+            backupfile="${backupbase}_$backup_index"
+        done
+        echo "-> Moving existing file $targetfile to $backupfile"
+        mv "$targetfile" "$backupfile" || return 1
+    fi
+
+    echo "-> Creating symlink to $sourcefile at $targetfile"
+    ln -s "$sourcefile" "$targetfile" || return 1
+    printf '\n'
 }
 
 configure_git_identity() {
@@ -105,14 +132,42 @@ main() {
     local sourcedir
     local targetdir
     local backupdir
-    local sourcefile
-    local targetfile
+    local configdir
     local file
     local -a dotfiles
+    local -a zshfiles
 
     sourcedir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)" # dotfiles directory
     targetdir="$HOME"                                            # target directory
     backupdir="$HOME/.dotfiles_bkup"                             # old dotfiles backup directory
+
+    case "${INSTALL_ZSH:-0}" in
+        0|1) ;;
+        *) echo "INSTALL_ZSH must be 0 or 1"; return 1 ;;
+    esac
+
+    zshfiles=(.zprofile .zshrc aliases.zsh local.example.zsh)
+    if [ "${INSTALL_ZSH:-0}" = "1" ]; then
+        configdir="${XDG_CONFIG_HOME:-$HOME/.config}"
+        case "$configdir" in
+            /*) ;;
+            *) echo "XDG_CONFIG_HOME must be an absolute path"; return 1 ;;
+        esac
+        command -v zsh >/dev/null 2>&1 || {
+            echo "zsh is required when INSTALL_ZSH=1"
+            return 1
+        }
+        for file in "${zshfiles[@]}"; do
+            if [ ! -f "$sourcedir/.config/zsh/$file" ]; then
+                echo "Missing Zsh source file $sourcedir/.config/zsh/$file"
+                return 1
+            fi
+        done
+        if [ ! -f "$sourcedir/.zshenv" ] || [ ! -f "$sourcedir/.config/starship.toml" ]; then
+            echo "Missing .zshenv or .config/starship.toml"
+            return 1
+        fi
+    fi
 
     # list of files/folders to symlink in homedir
     dotfiles=(
@@ -131,41 +186,33 @@ main() {
     printf '\n'
 
     for file in "${dotfiles[@]}"; do
-        sourcefile="$sourcedir/.$file"
-        targetfile="$targetdir/.$file"
-
-        file_header "$sourcefile"
-
-        if [ ! -e "$sourcefile" ]; then
-            echo "-> Missing source file $sourcefile"
-            return 1
-        fi
-
-        # Existing symlink, whether valid or broken.
-        if [ -L "$targetfile" ]; then
-            if [ "$(canonical_path "$targetfile")" = "$(canonical_path "$sourcefile")" ]; then
-                echo "-> Already correctly linked to $sourcefile"
-                printf '\n'
-                continue
-            fi
-
-            echo "-> Removing existing symlink $targetfile (from $(readlink "$targetfile"))"
-            unlink "$targetfile"
-
-        # move old file (not a symlink) into $backupdir
-        elif [ -e "$targetfile" ]; then
-            echo "-> Moving existing file $targetfile to $backupdir"
-            mkdir -p "$backupdir"
-            mv -f "$targetfile" "$backupdir/${file}_$(date +%Y%m%d_%H%M%S)"
-        fi
-
-        # symlink file
-        echo "-> Creating symlink to $sourcefile at $targetfile"
-        ln -s "$sourcefile" "$targetfile"
-        printf '\n'
+        link_dotfile "$sourcedir/.$file" "$targetdir/.$file" "$backupdir" "$file" || return 1
     done
 
     configure_git_identity
+
+    if [ "${INSTALL_ZSH:-0}" = "1" ]; then
+        for file in "${zshfiles[@]}"; do
+            link_dotfile "$sourcedir/.config/zsh/$file" "$configdir/zsh/$file" \
+                "$backupdir" "zsh_${file#.}" || return 1
+        done
+        link_dotfile "$sourcedir/.config/starship.toml" "$configdir/starship.toml" \
+            "$backupdir" "starship.toml" || return 1
+
+        for file in .zprofile .zshrc .zlogin .zlogout; do
+            if [ -e "$targetdir/$file" ] || [ -L "$targetdir/$file" ]; then
+                info "Keeping $targetdir/$file; Zsh will read startup files from $configdir/zsh instead."
+                info "Review it for settings to transfer to the new configuration or local.zsh."
+            fi
+        done
+
+        # Activate the new startup location only after its files are in place.
+        link_dotfile "$sourcedir/.zshenv" "$targetdir/.zshenv" "$backupdir" "zshenv" || return 1
+        info "Zsh configuration installed. Try it with: env -u ZDOTDIR zsh -l"
+        if ! command -v starship >/dev/null 2>&1; then
+            info "Starship is not installed; Zsh will use its basic prompt."
+        fi
+    fi
 
     if [ "${INSTALL_VIM_PLUGINS:-1}" = "1" ]; then
         command -v git >/dev/null 2>&1 || {
@@ -219,10 +266,10 @@ if [ "$is_sourced" -eq 1 ]; then
     unset original_shell_options
     return_status="$status"
     unset is_sourced status
-    unset -f canonical_path info file_header configure_git_identity main
+    unset -f info file_header link_dotfile configure_git_identity main
     return "$return_status"
 fi
 
 set -euo pipefail
 main "$@"
-info "Dotfiles installed. Open a new shell or run: source $HOME/.bashrc"
+info "Dotfiles installed. To reload an existing Bash session: source $HOME/.bashrc"
