@@ -1,40 +1,92 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
+# Adapted from https://starship.rs/presets/tokyo-night.
+# Unicode escapes keep this file ASCII; the prompt needs a Nerd Font.
 add_newline = false
-format = '$username$hostname$directory$git_branch$git_status$line_break$character'
+format = """
+$username\
+$hostname\
+[\u2591\u2592\u2593](#a3aed2)\
+$os\
+[\ue0b4](fg:#a3aed2 bg:#769ff0)\
+$directory\
+[\ue0b4](fg:#769ff0 bg:#394260)\
+$git_branch\
+$git_status\
+[\ue0b4](fg:#394260 bg:#212736)\
+$nodejs\
+$bun\
+$rust\
+$golang\
+$php\
+[\ue0b4 ](fg:#212736)\
+$line_break\
+$character"""
 
 [username]
-show_always = true
-format = '[$user]($style)'
-style_user = 'green'
-style_root = 'bold red'
+show_always = false
+format = '[$user]($style) '
+style_user = '#a3aed2'
+style_root = 'bold #f7768e'
 
 [hostname]
-ssh_only = false
+ssh_only = true
 format = '[@$hostname]($style) '
-style = 'yellow'
+style = '#a3aed2'
+
+[os]
+disabled = false
+format = '[ $symbol ]($style)'
+style = 'fg:#090c0c bg:#a3aed2'
+
+[os.symbols]
+Macos = "\U000f0035"
+Ubuntu = "\U000f0548"
+Linux = "\U000f033d"
 
 [directory]
-format = '[$path]($style)[$read_only]($read_only_style) '
-style = 'blue'
-truncation_length = 0
+format = '[ $path$read_only ]($style)'
+style = 'fg:#e3e5e5 bg:#769ff0'
+truncation_length = 3
+truncation_symbol = '.../'
 truncate_to_repo = false
 read_only = ' (read-only)'
 
 [git_branch]
-format = 'on [$branch]($style) '
-style = 'magenta'
+symbol = "\uf418"
+format = '[ $symbol $branch ]($style)'
+style = 'fg:#769ff0 bg:#394260'
 
 [git_status]
-format = '([\[$all_status$ahead_behind\]]($style) )'
-style = 'yellow'
-ahead = 'ahead ${count}'
-behind = 'behind ${count}'
-diverged = 'ahead ${ahead_count}, behind ${behind_count}'
-renamed = 'r'
-deleted = 'x'
+format = '[($all_status$ahead_behind )]($style)'
+style = 'fg:#769ff0 bg:#394260'
+
+[nodejs]
+symbol = "\ue718"
+format = '[ $symbol ($version) ]($style)'
+style = 'fg:#769ff0 bg:#212736'
+
+[bun]
+symbol = "\ue76f"
+format = '[ $symbol ($version) ]($style)'
+style = 'fg:#769ff0 bg:#212736'
+
+[rust]
+symbol = "\ue7a8"
+format = '[ $symbol ($version) ]($style)'
+style = 'fg:#769ff0 bg:#212736'
+
+[golang]
+symbol = "\ue627"
+format = '[ $symbol ($version) ]($style)'
+style = 'fg:#769ff0 bg:#212736'
+
+[php]
+symbol = "\ue608"
+format = '[ $symbol ($version) ]($style)'
+style = 'fg:#769ff0 bg:#212736'
 
 [character]
-success_symbol = '[>](bold green)'
-error_symbol = '[>](bold red)'
-vimcmd_symbol = '[<](bold green)'
+success_symbol = '[>](bold #9ece6a)'
+error_symbol = '[>](bold #f7768e)'
+vimcmd_symbol = '[<](bold #9ece6a)'
