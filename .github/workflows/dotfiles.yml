@@ -39,11 +39,13 @@ jobs:
           case "$RUNNER_OS" in
             Linux)
               sudo apt-get update
-              sudo apt-get install -y bash-completion git vim
+              sudo apt-get install -y bash-completion git python3 vim zsh
               ;;
             macOS)
               brew list git >/dev/null 2>&1 || brew install git
               command -v vim >/dev/null 2>&1 || brew install vim
+              command -v python3 >/dev/null 2>&1 || brew install python
+              command -v zsh >/dev/null 2>&1 || brew install zsh
               ;;
             *)
               echo "Unsupported runner OS: $RUNNER_OS"
@@ -59,6 +61,7 @@ jobs:
           bash --version | head -n 1
           git --version
           vim --version | head -n 1
+          zsh --version
 
       - name: Validate Bash syntax
         shell: bash
@@ -109,6 +112,18 @@ jobs:
             echo "Non-interactive installation should not create .gitconfig.local"
             exit 1
           fi
+
+      - name: Verify Zsh autocomplete and fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in .zshenv .config/zsh/.zprofile .config/zsh/.zshrc .config/zsh/aliases.zsh; do
+            zsh -n "$file"
+          done
+          plugin_dir="$(mktemp -d "$RUNNER_TEMP/zsh-autocomplete.XXXXXX")"
+          git clone --depth 1 --branch 26.08.04 \
+            https://github.com/marlonrichert/zsh-autocomplete.git "$plugin_dir"
+          python3 -u tests/verify-zsh.py --plugin-dir "$plugin_dir"
 
       - name: Verify installer failure handling
         shell: bash

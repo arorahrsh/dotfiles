@@ -83,6 +83,65 @@ review them and put machine-specific settings in `~/.config/zsh/local.zsh`
 (or `$XDG_CONFIG_HOME/zsh/local.zsh`). Oh My Zsh is not required. Without
 Starship, Zsh uses the basic prompt; the Bash prompt remains unchanged.
 
+## Zsh Autocomplete
+
+[zsh-autocomplete](https://github.com/marlonrichert/zsh-autocomplete) is optional.
+When installed, matching directories appear as you type `cd test`, without
+pressing Tab to display them. Use Down to enter the menu, arrow keys to choose,
+and Enter to accept the selection. Press Enter again to run the command.
+Tab inserts the first suggestion. Up opens history search.
+
+On macOS:
+
+```sh
+brew install zsh-autocomplete
+```
+
+On Ubuntu (or for a pinned user-local installation on either OS):
+
+```sh
+mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins"
+git clone --depth 1 --branch 26.08.04 \
+  https://github.com/marlonrichert/zsh-autocomplete.git \
+  "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins/zsh-autocomplete"
+```
+
+The config prefers that user-local installation, then checks Homebrew and
+`/usr/share/zsh-autocomplete`. Plugin code stays outside this repository; the
+installer does not download it. Homebrew updates it with
+`brew upgrade zsh-autocomplete`; the user-local checkout stays on the documented
+release until you deliberately update it.
+
+Restart after installing or removing the plugin:
+
+```sh
+exec zsh -l
+```
+
+When the plugin is absent or `TERM=dumb`, ordinary Tab completion remains
+available. To disable live suggestions for a new shell:
+
+```sh
+DOTFILES_ZSH_AUTOCOMPLETE=0 zsh -l
+```
+
+For a custom install location, set `ZSH_AUTOCOMPLETE_PLUGIN` to the full path of
+`zsh-autocomplete.plugin.zsh` before starting Zsh. A missing override path uses
+ordinary completion instead. Startup controls must be set before `.zshrc`, not
+in `local.zsh`, which loads last. That file can still override plugin `zstyle`
+settings, such as `zstyle ':autocomplete:*' delay 0.2`.
+
+The macOS and Ubuntu CI jobs test plugin loading, ordinary-completion fallbacks,
+and live directory selection in an isolated terminal. To run the same check
+locally with the Homebrew plugin:
+
+```sh
+python3 tests/verify-zsh.py --plugin-dir "$(brew --prefix)/share/zsh-autocomplete"
+```
+
+For a user-local checkout, pass
+`"${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins/zsh-autocomplete"` instead.
+
 ## Update
 
 Pull the latest changes and rerun the installer. Correct existing symlinks and
