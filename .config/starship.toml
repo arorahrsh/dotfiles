@@ -6,20 +6,21 @@ add_newline = false
 format = """
 $username\
 $hostname\
-[\u2591\u2592\u2593](#a3aed2)\
 $os\
 [\ue0b4](fg:#a3aed2 bg:#769ff0)\
 $directory\
-[\ue0b4](fg:#769ff0 bg:#394260)\
+[\ue0b4](fg:#769ff0)\
+( [\ue0b6](fg:#394260)\
 $git_branch\
 $git_status\
-[\ue0b4](fg:#394260 bg:#212736)\
+[\ue0b4](fg:#394260))\
+( [\ue0b6](fg:#212736)\
 $nodejs\
 $bun\
 $rust\
 $golang\
 $php\
-[\ue0b4 ](fg:#212736)\
+[\ue0b4](fg:#212736))\
 $line_break\
 $character"""
 
@@ -46,7 +47,7 @@ Linux = "\U000f033d"
 
 [directory]
 format = '[ $path$read_only ]($style)'
-style = 'fg:#e3e5e5 bg:#769ff0'
+style = 'bold fg:#1a1b26 bg:#769ff0'
 truncation_length = 3
 truncation_symbol = '.../'
 truncate_to_repo = false
@@ -55,36 +56,36 @@ read_only = ' (read-only)'
 [git_branch]
 symbol = "\uf418"
 format = '[ $symbol $branch ]($style)'
-style = 'fg:#769ff0 bg:#394260'
+style = 'fg:#c0caf5 bg:#394260'
 
 [git_status]
 format = '[($all_status$ahead_behind )]($style)'
-style = 'fg:#769ff0 bg:#394260'
+style = 'fg:#e0af68 bg:#394260'
 
 [nodejs]
 symbol = "\ue718"
 format = '[ $symbol ($version) ]($style)'
-style = 'fg:#769ff0 bg:#212736'
+style = 'fg:#7dcfff bg:#212736'
 
 [bun]
 symbol = "\ue76f"
 format = '[ $symbol ($version) ]($style)'
-style = 'fg:#769ff0 bg:#212736'
+style = 'fg:#7dcfff bg:#212736'
 
 [rust]
 symbol = "\ue7a8"
 format = '[ $symbol ($version) ]($style)'
-style = 'fg:#769ff0 bg:#212736'
+style = 'fg:#7dcfff bg:#212736'
 
 [golang]
 symbol = "\ue627"
 format = '[ $symbol ($version) ]($style)'
-style = 'fg:#769ff0 bg:#212736'
+style = 'fg:#7dcfff bg:#212736'
 
 [php]
 symbol = "\ue608"
 format = '[ $symbol ($version) ]($style)'
-style = 'fg:#769ff0 bg:#212736'
+style = 'fg:#7dcfff bg:#212736'
 
 [character]
 success_symbol = '[>](bold #9ece6a)'
