@@ -18,6 +18,10 @@ import termios
 import time
 
 
+def timeout_test(_signum, _frame):
+    raise TimeoutError("Zsh verification exceeded 180 seconds")
+
+
 class Shell:
     def __init__(self, executable, env, directory, login=True):
         self.pid, self.fd = pty.fork()
@@ -95,15 +99,21 @@ def verify(repo, plugin_dir, zsh):
             "INSTALL_ZSH": "1", "INSTALL_VIM_PLUGINS": "0",
             "EXPECTED_PLUGIN": str(plugin.resolve().parent),
         }
-        subprocess.run(["bash", str(repo / "install.sh")], env=env,
-                       stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                       stderr=subprocess.PIPE, text=True, check=True)
+        print("Installing dotfiles in an isolated home", flush=True)
+        result = subprocess.run(["bash", str(repo / "install.sh")], env=env,
+                                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE, text=True, timeout=60)
+        if result.returncode:
+            raise AssertionError(
+                f"Installer exited {result.returncode}:\n{result.stdout}\n{result.stderr}"
+            )
         # Run after the real plugin and Starship precmd hooks for a stable marker.
         (home / ".config/zsh/local.zsh").write_text(
             "dotfiles_test_prompt() { PROMPT='DOTFILES-READY> '; RPROMPT=; }\n"
             "precmd_functions+=(dotfiles_test_prompt)\n"
             "alias dotfiles_local_check='print local-loaded'\n"
         )
+        print("Testing interactive fallback shells", flush=True)
         for name, overrides in (
             ("missing plugin", {"ZSH_AUTOCOMPLETE_PLUGIN": str(root / "missing")}),
             ("disabled plugin", {"ZSH_AUTOCOMPLETE_PLUGIN": str(plugin),
@@ -169,6 +179,8 @@ def verify(repo, plugin_dir, zsh):
 
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGALRM, timeout_test)
+    signal.alarm(180)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--plugin-dir", type=Path, required=True)
     args = parser.parse_args()

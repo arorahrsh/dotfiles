@@ -118,12 +118,14 @@ jobs:
             zsh -n "$file"
           done
           if [ "$RUNNER_OS" = macOS ]; then
-            plugin_dir="$(brew --prefix)/share/zsh-autocomplete"
+            brew_bin="$(command -v brew)"
+            plugin_dir="$(dirname "$(dirname "$brew_bin")")/share/zsh-autocomplete"
           else
             plugin_dir="$(mktemp -d "$RUNNER_TEMP/zsh-autocomplete.XXXXXX")"
             timeout 120s git clone --depth 1 --branch 26.08.04 \
               https://github.com/marlonrichert/zsh-autocomplete.git "$plugin_dir"
           fi
+          echo "Testing zsh-autocomplete from $plugin_dir"
           python3 -u tests/verify-zsh.py --plugin-dir "$plugin_dir"
 
       - name: Verify installer failure handling
