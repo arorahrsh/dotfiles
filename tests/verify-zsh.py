@@ -13,6 +13,7 @@ import shutil
 import signal
 import struct
 import subprocess
+import sys
 import tempfile
 import termios
 import time
@@ -61,20 +62,29 @@ class Shell:
         self.expect("DOTFILES-READY> ")
 
     def close(self):
+        had_failure = sys.exc_info()[0] is not None
         try:
-            self.send("\x03")
-            time.sleep(0.1)
-            self.send("exit\n")
-            deadline = time.monotonic() + 5
-            while time.monotonic() < deadline:
+            os.close(self.fd)
+        except OSError as error:
+            if error.errno != errno.EBADF:
+                raise
+        try:
+            os.kill(self.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        deadline = time.monotonic() + 2
+        while time.monotonic() < deadline:
+            try:
                 if os.waitpid(self.pid, os.WNOHANG)[0]:
                     return
-                time.sleep(0.05)
-            # Interactive shells may ignore SIGTERM; bound test cleanup.
-            os.kill(self.pid, signal.SIGKILL)
-            os.waitpid(self.pid, 0)
-        finally:
-            os.close(self.fd)
+            except ChildProcessError:
+                return
+            time.sleep(0.05)
+        message = f"Zsh child {self.pid} did not exit after SIGKILL"
+        if had_failure:
+            print(message, file=sys.stderr)
+        else:
+            raise AssertionError(message)
 
 
 def verify(repo, plugin_dir, zsh):
@@ -119,6 +129,7 @@ def verify(repo, plugin_dir, zsh):
             ("disabled plugin", {"ZSH_AUTOCOMPLETE_PLUGIN": str(plugin),
                                  "DOTFILES_ZSH_AUTOCOMPLETE": "0"}),
         ):
+            print(f"Starting {name} fallback shell", flush=True)
             shell = Shell(zsh, dict(env, **overrides), str(work))
             try:
                 shell.expect("DOTFILES-READY> ")
