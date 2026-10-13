@@ -11,10 +11,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: dotfiles-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   install:
     name: Install on ${{ matrix.os }}
@@ -43,6 +39,7 @@ jobs:
               ;;
             macOS)
               brew list git >/dev/null 2>&1 || brew install git
+              brew list zsh-autocomplete >/dev/null 2>&1 || brew install zsh-autocomplete
               command -v vim >/dev/null 2>&1 || brew install vim
               command -v python3 >/dev/null 2>&1 || brew install python
               command -v zsh >/dev/null 2>&1 || brew install zsh
@@ -120,9 +117,13 @@ jobs:
           for file in .zshenv .config/zsh/.zprofile .config/zsh/.zshrc .config/zsh/aliases.zsh; do
             zsh -n "$file"
           done
-          plugin_dir="$(mktemp -d "$RUNNER_TEMP/zsh-autocomplete.XXXXXX")"
-          git clone --depth 1 --branch 26.08.04 \
-            https://github.com/marlonrichert/zsh-autocomplete.git "$plugin_dir"
+          if [ "$RUNNER_OS" = macOS ]; then
+            plugin_dir="$(brew --prefix)/share/zsh-autocomplete"
+          else
+            plugin_dir="$(mktemp -d "$RUNNER_TEMP/zsh-autocomplete.XXXXXX")"
+            timeout 120s git clone --depth 1 --branch 26.08.04 \
+              https://github.com/marlonrichert/zsh-autocomplete.git "$plugin_dir"
+          fi
           python3 -u tests/verify-zsh.py --plugin-dir "$plugin_dir"
 
       - name: Verify installer failure handling
