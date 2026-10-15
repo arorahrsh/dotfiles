@@ -121,6 +121,9 @@ def verify(repo, plugin_dir, zsh):
         (home / ".config/zsh/local.zsh").write_text(
             "dotfiles_test_prompt() { PROMPT='DOTFILES-READY> '; RPROMPT=; }\n"
             "precmd_functions+=(dotfiles_test_prompt)\n"
+            "dotfiles_test_line() { print -r -- __DOTFILES_LINE__${BUFFER}__; }\n"
+            "zle -N dotfiles_test_line\n"
+            "bindkey '^X^T' dotfiles_test_line\n"
             "alias dotfiles_local_check='print local-loaded'\n"
         )
         print("Testing interactive fallback shells", flush=True)
@@ -136,6 +139,7 @@ def verify(repo, plugin_dir, zsh):
                 shell.check("[[ $skip_global_compinit == 1 && $TERM == tmux-256color ]]")
                 shell.check("[[ -n ${_comps[git]} && ${_comps[g]} == ${_comps[git]} ]]")
                 shell.check("[[ $(bindkey '^[[B') == *history-beginning-search-forward ]]")
+                shell.check("[[ $(bindkey '^[[A') == *history-beginning-search-backward ]]")
                 shell.check("(( ! ${+functions[.autocomplete:async:complete]} ))")
             finally:
                 shell.close()
@@ -160,29 +164,45 @@ def verify(repo, plugin_dir, zsh):
             shell.expect("DOTFILES-READY> ")
             shell.check("[[ ${nameddirs[autocomplete]} == $EXPECTED_PLUGIN ]]")
             shell.check("[[ -n ${_comps[git]} && ${_comps[g]} == ${_comps[git]} ]]")
-            shell.check("[[ $(bindkey '^[[B') == *down-line-or-select ]]")
-            shell.check("[[ $(bindkey '^[OB') == *down-line-or-select ]]")
-            shell.check("[[ $(bindkey '^[[A') == *up-line-or-search ]]")
+            shell.check("[[ $(bindkey '^[[B') == *history-beginning-search-forward ]]")
+            shell.check("[[ $(bindkey '^[OB') == *history-beginning-search-forward ]]")
+            shell.check("[[ $(bindkey '^[[A') == *history-beginning-search-backward ]]")
+            shell.check("[[ $(bindkey '^[OA') == *history-beginning-search-backward ]]")
             shell.check("zstyle -a ':autocomplete::compinit' arguments args && [[ $args == -i ]]")
             shell.check("[[ $TERM == tmux-256color && -n ${aliases[dotfiles_local_check]} ]]")
             shell.send("cd test")
             shell.expect("test-one")
             shell.expect("test-two")
-            # Down enters the selection menu. The first Enter accepts the item;
-            # the second executes cd. Verify the resulting directory separately.
-            shell.send("\x1b[B\n\n")
+            # Tab selects a suggestion; the next Enter executes cd.
+            shell.send("\t\n\n")
             shell.expect("DOTFILES-READY> ")
             shell.check("[[ $PWD == */work/test* && -d $PWD ]]")
+            shell.send("print -r -- git push first\n")
+            shell.expect("git push first")
+            shell.expect("DOTFILES-READY> ")
+            shell.send("print -r -- unrelated\n")
+            shell.expect("unrelated")
+            shell.expect("DOTFILES-READY> ")
+            shell.send("print -r -- git push second\n")
+            shell.expect("git push second")
+            shell.expect("DOTFILES-READY> ")
+            shell.send("print -r -- git push\x1b[A\x18\x14")
+            shell.expect("__DOTFILES_LINE__print -r -- git push second__")
+            shell.send("\x1b[A\x18\x14")
+            shell.expect("__DOTFILES_LINE__print -r -- git push first__")
+            shell.send("\x1b[B\x18\x14")
+            shell.expect("__DOTFILES_LINE__print -r -- git push second__")
+            shell.send("\x03")
         finally:
             shell.close()
-        print("PASS: live directory suggestions without Tab, arrow selection, and cd")
+        print("PASS: live directory suggestions, Tab selection, and prefix history")
 
         shell = Shell(zsh, env, str(work), login=False)
         try:
             shell.expect("DOTFILES-READY> ")
             shell.check("[[ ${nameddirs[autocomplete]} == $EXPECTED_PLUGIN ]]")
             shell.check("[[ -n ${_comps[git]} && ${_comps[g]} == ${_comps[git]} ]]")
-            shell.check("[[ $(bindkey '^[[B') == *down-line-or-select ]]")
+            shell.check("[[ $(bindkey '^[[B') == *history-beginning-search-forward ]]")
         finally:
             shell.close()
         print("PASS: non-login interactive shells load autocomplete")

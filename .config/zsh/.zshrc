@@ -53,13 +53,13 @@ else
     fi
     zmodload zsh/complist
     zstyle ':completion:*' menu select
-    bindkey '^[[A' history-beginning-search-backward
-    bindkey '^[[B' history-beginning-search-forward
-    bindkey '^[OA' history-beginning-search-backward
-    bindkey '^[OB' history-beginning-search-forward
 fi
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 
+bindkey '^[[A' history-beginning-search-backward
+bindkey '^[[B' history-beginning-search-forward
+bindkey '^[OA' history-beginning-search-backward
+bindkey '^[OB' history-beginning-search-forward
 bindkey '^[[H' beginning-of-line
 bindkey '^[[F' end-of-line
 bindkey '^[OH' beginning-of-line
