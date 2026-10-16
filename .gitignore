@@ -5,3 +5,7 @@
 .zcompdump*
 .zsh_history*
 *.zwc
+
+# Generated Python bytecode from local tests.
+__pycache__/
+*.pyc
