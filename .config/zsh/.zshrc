@@ -81,6 +81,16 @@ if [[ ${TERM:-dumb} != dumb ]] && (( $+commands[starship] )); then
     eval "$(starship init zsh)"
 fi
 
+if [[ ${TERM:-dumb} != dumb ]]; then
+    autoload -Uz add-zsh-hook
+    _dotfiles_set_title() {
+        local title=${PWD:t}
+        title=${title//[[:cntrl:]]/}
+        printf '\e]0;%s\a' "$title"
+    }
+    add-zsh-hook precmd _dotfiles_set_title
+fi
+
 unset _dotfiles_zsh_state _dotfiles_zsh_cache
 unset _dotfiles_autocomplete _dotfiles_autocomplete_candidates _dotfiles_plugin
 

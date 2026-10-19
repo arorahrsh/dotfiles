@@ -161,6 +161,7 @@ def verify(repo, plugin_dir, zsh):
         destination.symlink_to(plugin_dir, target_is_directory=True)
         shell = Shell(zsh, env, str(work))
         try:
+            shell.expect(r"\x1b\]0;work\x07")
             shell.expect("DOTFILES-READY> ")
             shell.check("[[ ${nameddirs[autocomplete]} == $EXPECTED_PLUGIN ]]")
             shell.check("[[ -n ${_comps[git]} && ${_comps[g]} == ${_comps[git]} ]]")
@@ -170,6 +171,12 @@ def verify(repo, plugin_dir, zsh):
             shell.check("[[ $(bindkey '^[OA') == *history-beginning-search-backward ]]")
             shell.check("zstyle -a ':autocomplete::compinit' arguments args && [[ $args == -i ]]")
             shell.check("[[ $TERM == tmux-256color && -n ${aliases[dotfiles_local_check]} ]]")
+            shell.send("cd test-one\n")
+            shell.expect(r"\x1b\]0;test-one\x07")
+            shell.expect("DOTFILES-READY> ")
+            shell.send("cd ..\n")
+            shell.expect(r"\x1b\]0;work\x07")
+            shell.expect("DOTFILES-READY> ")
             shell.send("cd test")
             shell.expect("test-one")
             shell.expect("test-two")
@@ -195,7 +202,7 @@ def verify(repo, plugin_dir, zsh):
             shell.send("\x03")
         finally:
             shell.close()
-        print("PASS: live directory suggestions, Tab selection, and prefix history")
+        print("PASS: directory tab titles, live suggestions, Tab selection, and prefix history")
 
         shell = Shell(zsh, env, str(work), login=False)
         try:
