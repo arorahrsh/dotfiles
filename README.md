@@ -87,9 +87,11 @@ Starship, Zsh uses the basic prompt; the Bash prompt remains unchanged.
 
 [zsh-autocomplete](https://github.com/marlonrichert/zsh-autocomplete) is optional.
 When installed, matching directories appear as you type `cd test`, without
-pressing Tab to display them. Use Down to enter the menu, arrow keys to choose,
-and Enter to accept the selection. Press Enter again to run the command.
-Tab inserts the first suggestion. Up opens history search.
+pressing Tab to display them. Press Tab to select a suggestion, Enter to accept
+it, and Enter again to run the command. To search command history, type a
+prefix such as `git push` and press Up to cycle through earlier commands
+starting with that prefix. Down moves forward through those matches. With an
+empty prompt, Up and Down navigate history normally.
 
 On macOS:
 
@@ -131,9 +133,9 @@ ordinary completion instead. Startup controls must be set before `.zshrc`, not
 in `local.zsh`, which loads last. That file can still override plugin `zstyle`
 settings, such as `zstyle ':autocomplete:*' delay 0.2`.
 
-The macOS and Ubuntu CI jobs test plugin loading, ordinary-completion fallbacks,
-and live directory selection in an isolated terminal. To run the same check
-locally with the Homebrew plugin:
+The macOS and Ubuntu CI jobs test plugin loading, ordinary-completion
+fallbacks, Tab selection, and prefix history search in an isolated terminal.
+To run the same check locally with the Homebrew plugin:
 
 ```sh
 python3 tests/verify-zsh.py --plugin-dir "$(brew --prefix)/share/zsh-autocomplete"
