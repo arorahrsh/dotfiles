@@ -1,0 +1,10 @@
+brew "bash"
+brew "bash-completion@2"
+brew "git"
+brew "tmux"
+brew "vim"
+brew "starship"
+brew "zsh-autocomplete"
+
+cask "font-meslo-lg-nerd-font"
+cask "iterm2"

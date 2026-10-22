@@ -60,6 +60,13 @@ jobs:
           vim --version | head -n 1
           zsh --version
 
+      - name: Validate macOS Brewfile
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby -c Brewfile
+
       - name: Validate Bash syntax
         shell: bash
         run: |

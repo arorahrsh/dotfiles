@@ -13,24 +13,42 @@ sudo apt-get install -y bash-completion git vim
 
 ### macOS
 
-Install the Xcode Command Line Tools and [Homebrew](https://brew.sh/), then run:
+Install the Xcode Command Line Tools and [Homebrew](https://brew.sh/).
+The Command Line Tools provide Git for the initial clone.
 
 ```sh
 xcode-select --install
-brew install bash-completion@2 git vim
 ```
 
-The default installation configures Bash. To use it from a Zsh terminal,
-start Bash before loading the Bash configuration:
+The optional Brewfile installs Homebrew Bash, Bash completion, Git, tmux, Vim,
+Starship, zsh-autocomplete, iTerm2, and the Meslo LG Nerd Font. macOS already
+provides Zsh, so the Brewfile does not replace it. Homebrew Bash is not made
+your login shell; use it explicitly if you want Bash 4.2+ completion. The
+default dotfiles installation configures Bash. To use it from a Zsh terminal,
+start Bash before
+loading the Bash configuration (use `exec bash -l` if you did not install
+Homebrew Bash):
 
 ```sh
-exec bash -l
+exec "$(brew --prefix)/bin/bash" -l
 ```
 
 ## Install
 
 ```sh
 git clone https://github.com/arorahrsh/dotfiles.git ~/.dotfiles
+```
+
+On macOS, optionally install the tools listed in the Brewfile before running
+the dotfiles installer. `--no-upgrade` avoids upgrading tools you already have:
+
+```sh
+brew bundle --file "$HOME/.dotfiles/Brewfile" --no-upgrade
+```
+
+Then install the dotfiles:
+
+```sh
 ~/.dotfiles/install.sh
 ```
 
@@ -56,7 +74,7 @@ It keeps folder names readable, shows Git status and relevant language versions,
 and omits the clock. Your hostname appears only over SSH; your username appears
 over SSH or when running as root.
 
-On macOS, install Starship and a Nerd Font:
+On macOS, if you skipped the Brewfile, install Starship and a Nerd Font:
 
 ```sh
 brew install starship
@@ -93,7 +111,7 @@ prefix such as `git push` and press Up to cycle through earlier commands
 starting with that prefix. Down moves forward through those matches. With an
 empty prompt, Up and Down navigate history normally.
 
-On macOS:
+On macOS, if you skipped the Brewfile:
 
 ```sh
 brew install zsh-autocomplete
@@ -154,6 +172,9 @@ cd ~/.dotfiles
 git pull --ff-only
 ./install.sh
 ```
+
+On macOS, run `brew bundle --file "$HOME/.dotfiles/Brewfile" --no-upgrade`
+after pulling to install any newly listed tools without upgrading existing ones.
 
 Use `INSTALL_VIM_PLUGINS=0 ./install.sh` when you do not want to install Vim
 plugins during the update.
