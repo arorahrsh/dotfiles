@@ -84,7 +84,12 @@ jobs:
           rm -rf "$test_home"
           mkdir -p "$test_home"
 
-          HOME="$test_home" INSTALL_VIM_PLUGINS=0 ./install.sh
+          HOME="$test_home" ./install.sh
+
+          if [ -e "$test_home/.vim/bundle/Vundle.vim" ]; then
+            echo "Default install should not download Vim plugins"
+            exit 1
+          fi
 
           expected=(
             .bash_aliases
@@ -259,10 +264,9 @@ jobs:
           set -euo pipefail
 
           test_home="$RUNNER_TEMP/dotfiles-home"
-          mkdir -p "$test_home/.vim/bundle"
-          git clone --depth 1 https://github.com/VundleVim/Vundle.vim.git "$test_home/.vim/bundle/Vundle.vim"
-
-          HOME="$test_home" vim -Nu "$test_home/.vimrc" -n -es +'syntax on' +qall
+          test ! -e "$test_home/.vim/bundle/Vundle.vim"
+          HOME="$test_home" vim -Nu "$test_home/.vimrc" -n -es \
+            +'if exists(":Plugin") | cquit 1 | endif' +qall
 
       - name: Verify full install with Vim plugins
         shell: bash
@@ -273,7 +277,10 @@ jobs:
           rm -rf "$full_home"
           mkdir -p "$full_home"
 
-          HOME="$full_home" ./install.sh
+          HOME="$full_home" INSTALL_VIM_PLUGINS=1 ./install.sh
+
+          HOME="$full_home" vim -Nu "$full_home/.vimrc" -n -es \
+            +'if !exists(":Plugin") | cquit 1 | endif' +qall
 
           for plugin in Vundle.vim gruvbox base16-vim vim-airline vim-airline-themes; do
             if [ ! -d "$full_home/.vim/bundle/$plugin" ]; then

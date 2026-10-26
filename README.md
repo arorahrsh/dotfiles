@@ -52,11 +52,12 @@ Then install the dotfiles:
 ~/.dotfiles/install.sh
 ```
 
-The default install also clones Vundle and installs the Vim plugins. To install
-only the dotfiles, skip that optional network-dependent step:
+The default install does not download Vim plugins. Vim still loads the shared
+settings without Vundle. To clone Vundle and install the configured plugins,
+opt in to the network-dependent step:
 
 ```sh
-INSTALL_VIM_PLUGINS=0 ~/.dotfiles/install.sh
+INSTALL_VIM_PLUGINS=1 ~/.dotfiles/install.sh
 ```
 
 Open a new Bash shell after installation, or load the configuration into the
@@ -90,7 +91,7 @@ it alone does not enable it. A dark terminal background suits this preset.
 Install the Zsh configuration and start a Zsh login shell:
 
 ```sh
-INSTALL_ZSH=1 INSTALL_VIM_PLUGINS=0 ~/.dotfiles/install.sh
+INSTALL_ZSH=1 ~/.dotfiles/install.sh
 env -u ZDOTDIR zsh -l
 ```
 
@@ -176,8 +177,8 @@ git pull --ff-only
 On macOS, run `brew bundle --file "$HOME/.dotfiles/Brewfile" --no-upgrade`
 after pulling to install any newly listed tools without upgrading existing ones.
 
-Use `INSTALL_VIM_PLUGINS=0 ./install.sh` when you do not want to install Vim
-plugins during the update.
+Plugin installation remains opt-in on updates: run
+`INSTALL_VIM_PLUGINS=1 ./install.sh` to install the configured Vim plugins.
 
 ## Backups
 

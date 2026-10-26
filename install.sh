@@ -2,7 +2,7 @@
 
 ############################
 # install.sh
-# This script creates symlinks for dotfiles and installs Vundle/Vim plugins
+# This script creates symlinks for dotfiles and optionally installs Vim plugins
 ############################
 
 if [ -z "${BASH_VERSION:-}" ]; then
@@ -145,6 +145,10 @@ main() {
         0|1) ;;
         *) echo "INSTALL_ZSH must be 0 or 1"; return 1 ;;
     esac
+    case "${INSTALL_VIM_PLUGINS:-0}" in
+        0|1) ;;
+        *) echo "INSTALL_VIM_PLUGINS must be 0 or 1"; return 1 ;;
+    esac
 
     zshfiles=(.zprofile .zshrc aliases.zsh local.example.zsh)
     if [ "${INSTALL_ZSH:-0}" = "1" ]; then
@@ -214,7 +218,7 @@ main() {
         fi
     fi
 
-    if [ "${INSTALL_VIM_PLUGINS:-1}" = "1" ]; then
+    if [ "${INSTALL_VIM_PLUGINS:-0}" = "1" ]; then
         command -v git >/dev/null 2>&1 || {
             echo "git is required to install Vundle"
             return 1

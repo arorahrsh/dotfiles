@@ -5,24 +5,26 @@ set encoding=utf-8
 
 set nocompatible " Be IMproved
 
-filetype off " Required by Vundle
-set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
+if filereadable(expand('~/.vim/bundle/Vundle.vim/autoload/vundle.vim'))
+    filetype off " Required by Vundle
+    set rtp+=~/.vim/bundle/Vundle.vim
+    call vundle#begin()
 
-Plugin 'VundleVim/Vundle.vim'
+    Plugin 'VundleVim/Vundle.vim'
 
 " Themes
-Plugin 'morhetz/gruvbox'
-Plugin 'chriskempson/base16-vim'
+    Plugin 'morhetz/gruvbox'
+    Plugin 'chriskempson/base16-vim'
 
 " Airline
-Plugin 'vim-airline/vim-airline'
-Plugin 'vim-airline/vim-airline-themes'
+    Plugin 'vim-airline/vim-airline'
+    Plugin 'vim-airline/vim-airline-themes'
 
 " Markdown
 "Plugin 'JamshedVesuna/vim-markdown-preview' 
 
-call vundle#end()
+    call vundle#end()
+endif
 
 
 " ================ General Config ====================
