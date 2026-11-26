@@ -87,20 +87,39 @@ On Ubuntu, install Zsh with `sudo apt-get install -y zsh`, then follow the
 for your release and install a [Nerd Font](https://www.nerdfonts.com/).
 Select the Nerd Font in your terminal's font settings on either OS; installing
 it alone does not enable it. A dark terminal background suits this preset.
+In iTerm2, choose an installed Meslo LG Nerd Font variant under
+**Settings > Profiles > Text**, then open a new tab. Squares or question marks
+in the prompt can indicate missing font glyphs. The operating-system icon, such
+as the Apple logo on macOS, is intentional.
 
 Install the Zsh configuration and start a Zsh login shell:
 
 ```sh
 INSTALL_ZSH=1 ~/.dotfiles/install.sh
-env -u ZDOTDIR zsh -l
+exec env -u ZDOTDIR zsh -l
 ```
 
 The installer symlinks the tracked Starship configuration and individual Zsh
-files. It does not install packages or change your login shell. Existing
+files. It backs up an existing regular `~/.zshenv` before linking its own. It
+does not install packages or change your login shell. Existing
 home-directory Zsh startup files are left in place but are no longer loaded;
 review them and put machine-specific settings in `~/.config/zsh/local.zsh`
 (or `$XDG_CONFIG_HOME/zsh/local.zsh`). Oh My Zsh is not required. Without
 Starship, Zsh uses the basic prompt; the Bash prompt remains unchanged.
+
+If the prompt does not appear, check these values in the affected Zsh session:
+
+```sh
+command -v starship
+printf 'ZDOTDIR=%s TERM=%s\n' "${ZDOTDIR:-unset}" "${TERM:-unset}"
+ls -l "$HOME/.zshenv" "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/.zshrc" \
+  "${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml"
+```
+
+Starship should be on your PATH, the files should link to this repository, and
+`ZDOTDIR` should point to the Zsh configuration directory. The basic prompt is
+used when Starship is unavailable or `TERM` is `dumb`. A custom
+`STARSHIP_CONFIG` or settings in `local.zsh` can also change the prompt.
 
 ## Zsh Autocomplete
 
