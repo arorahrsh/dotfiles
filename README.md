@@ -180,6 +180,23 @@ after pulling to install any newly listed tools without upgrading existing ones.
 Plugin installation remains opt-in on updates: run
 `INSTALL_VIM_PLUGINS=1 ./install.sh` to install the configured Vim plugins.
 
+## macOS Preferences
+
+The optional preferences script changes only the settings you specify. To apply
+the preferred Finder, clock, and screenshot settings:
+
+```sh
+bash ~/.dotfiles/macos/preferences.sh \
+  --show-extensions on --clock-seconds on \
+  --finder-path-bar on --finder-search current --hidden-files on \
+  --screenshots-dir "$HOME/Pictures/Screenshots"
+```
+
+Choose another absolute path for `--screenshots-dir` if preferred; the script
+creates it if necessary. Run `bash ~/.dotfiles/macos/preferences.sh --help` for
+all options. Finder may restart, and the clock may need a logout and login to
+refresh. These preferences are not applied by the normal dotfiles installer.
+
 ## Backups
 
 The installer manages these files in your home directory:
