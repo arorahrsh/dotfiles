@@ -39,6 +39,13 @@ if [[ ${DOTFILES_ZSH_AUTOCOMPLETE:-1} != 0 && ${TERM:-dumb} != dumb ]]; then
 fi
 
 if [[ -n "$_dotfiles_autocomplete" ]]; then
+    # The plugin's recent-directory hook needs its data directory to exist.
+    _dotfiles_zsh_data="${XDG_DATA_HOME:-$HOME/.local/share}/zsh"
+    if ! (umask 077; mkdir -p -- "$_dotfiles_zsh_data") || [[ ! -w "$_dotfiles_zsh_data" ]]; then
+        if ! zstyle -s ':chpwd:' recent-dirs-file _dotfiles_recent_file; then
+            zstyle ':chpwd:*' recent-dirs-file /dev/null
+        fi
+    fi
     # The plugin runs compinit itself, before the first prompt.
     zstyle ':autocomplete::compinit' arguments -i
     zstyle ':autocomplete:*' delay 0.1
@@ -91,7 +98,7 @@ if [[ ${TERM:-dumb} != dumb ]]; then
     add-zsh-hook precmd _dotfiles_set_title
 fi
 
-unset _dotfiles_zsh_state _dotfiles_zsh_cache
+unset _dotfiles_zsh_state _dotfiles_zsh_cache _dotfiles_zsh_data _dotfiles_recent_file
 unset _dotfiles_autocomplete _dotfiles_autocomplete_candidates _dotfiles_plugin
 
 # Machine-specific overrides take precedence over the shared defaults.

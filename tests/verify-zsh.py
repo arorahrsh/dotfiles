@@ -156,10 +156,7 @@ def verify(repo, plugin_dir, zsh):
                         "(( ! ${+functions[compdef]} ))"], env=env, check=True)
         print("PASS: dumb-terminal fallback and non-interactive startup")
 
-        destination = Path(env["XDG_DATA_HOME"]) / "zsh/plugins/zsh-autocomplete"
-        destination.parent.mkdir(parents=True)
-        destination.symlink_to(plugin_dir, target_is_directory=True)
-        shell = Shell(zsh, env, str(work))
+        shell = Shell(zsh, dict(env, ZSH_AUTOCOMPLETE_PLUGIN=str(plugin)), str(work))
         try:
             shell.expect(r"\x1b\]0;work\x07")
             shell.expect("DOTFILES-READY> ")
@@ -174,6 +171,7 @@ def verify(repo, plugin_dir, zsh):
             shell.send("cd test-one\n")
             shell.expect(r"\x1b\]0;test-one\x07")
             shell.expect("DOTFILES-READY> ")
+            shell.check('[[ -f "$XDG_DATA_HOME/zsh/chpwd-recent-dirs" ]]')
             shell.send("cd ..\n")
             shell.expect(r"\x1b\]0;work\x07")
             shell.expect("DOTFILES-READY> ")
@@ -204,6 +202,9 @@ def verify(repo, plugin_dir, zsh):
             shell.close()
         print("PASS: directory tab titles, live suggestions, Tab selection, and prefix history")
 
+        destination = Path(env["XDG_DATA_HOME"]) / "zsh/plugins/zsh-autocomplete"
+        destination.parent.mkdir(parents=True)
+        destination.symlink_to(plugin_dir, target_is_directory=True)
         shell = Shell(zsh, env, str(work), login=False)
         try:
             shell.expect("DOTFILES-READY> ")
