@@ -201,20 +201,21 @@ Plugin installation remains opt-in on updates: run
 
 ## macOS Preferences
 
-The optional preferences script changes only the settings you specify. To apply
-the preferred Finder, clock, and screenshot settings:
+Run the optional preferences script to apply all preferred macOS settings:
 
 ```sh
-bash ~/.dotfiles/macos/preferences.sh \
-  --show-extensions on --clock-seconds on \
-  --finder-path-bar on --finder-search current --hidden-files on \
-  --screenshots-dir "$HOME/Pictures/Screenshots"
+~/.dotfiles/macos/preferences.sh
 ```
 
-Choose another absolute path for `--screenshots-dir` if preferred; the script
-creates it if necessary. Run `bash ~/.dotfiles/macos/preferences.sh --help` for
-all options. Finder may restart, and the clock may need a logout and login to
-refresh. These preferences are not applied by the normal dotfiles installer.
+This shows filename extensions, hidden files, the Finder path bar, and clock
+seconds; makes Finder search the current folder; and saves screenshots to
+`$HOME/Pictures/Screenshots`, creating the folder if needed.
+
+Preview changes with `~/.dotfiles/macos/preferences.sh --dry-run`. The preview
+does not write settings, create folders, or restart Finder. Use `--help` for
+usage. Unchanged settings are skipped, and Finder restarts once only if its
+settings change. The clock may need a logout and login to refresh. These
+preferences are not applied by the normal dotfiles installer.
 
 ## Backups
 

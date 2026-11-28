@@ -71,9 +71,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for file in install.sh .bashrc .bash_profile .bash_prompt .bash_aliases; do
+          for file in install.sh .bashrc .bash_profile .bash_prompt .bash_aliases macos/preferences.sh; do
             bash -n "$file"
           done
+
+      - name: Verify macOS preferences with isolated mocks
+        run: python3 tests/verify-macos-preferences.py
 
       - name: Install dotfiles into isolated HOME
         shell: bash

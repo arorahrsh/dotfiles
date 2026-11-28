@@ -3,112 +3,96 @@
 set -euo pipefail
 
 usage() {
-    cat <<'EOF'
-Usage: bash macos/preferences.sh [options]
+    cat <<'HELP'
+Usage: ./macos/preferences.sh [--dry-run] [--help]
 
-  --show-extensions on|off           Set whether Finder shows filename extensions
-  --clock-seconds on|off             Set whether the menu bar clock shows seconds
-  --finder-path-bar on|off           Set whether Finder shows the path bar
-  --finder-search current|mac        Set the default Finder search scope
-  --hidden-files on|off              Set whether Finder shows hidden files
-  --screenshots-dir ABSOLUTE_PATH    Set the default screenshot folder
-  -h, --help                         Show this help
+Apply preferred Finder, clock, and screenshot settings:
+  Show filename extensions, hidden files, and the Finder path bar
+  Search the current folder by default in Finder
+  Show seconds in the menu bar clock
+  Save screenshots to $HOME/Pictures/Screenshots
 
-Only the settings specified are changed. Finder may restart.
-EOF
+  --dry-run     Preview changes without applying them
+  -h, --help    Show this help
+
+Unchanged settings are skipped. Finder restarts once if its settings change.
+HELP
 }
 
-show_extensions=""
-clock_seconds=""
-finder_path_bar=""
-finder_search=""
-hidden_files=""
-screenshots_dir=""
-
-while [ "$#" -gt 0 ]; do
-    case "$1" in
-        -h|--help)
-            usage
-            exit 0
-            ;;
-        --show-extensions|--clock-seconds|--finder-path-bar|--finder-search|--hidden-files|--screenshots-dir)
-            option="$1"
-            if [ "$#" -lt 2 ]; then
-                printf 'Missing value for %s\n' "$option" >&2
-                exit 1
-            fi
-            case "$option:$2" in
-                --show-extensions:on|--show-extensions:off)
-                    show_extensions="$2" ;;
-                --clock-seconds:on|--clock-seconds:off)
-                    clock_seconds="$2" ;;
-                --finder-path-bar:on|--finder-path-bar:off)
-                    finder_path_bar="$2" ;;
-                --finder-search:current|--finder-search:mac)
-                    finder_search="$2" ;;
-                --hidden-files:on|--hidden-files:off)
-                    hidden_files="$2" ;;
-                --screenshots-dir:/*)
-                    screenshots_dir="$2" ;;
-                *)
-                    printf 'Invalid value for %s: %s\n' "$option" "$2" >&2
-                    exit 1 ;;
-            esac
-            shift 2
-            ;;
+dry_run=false
+for option in "$@"; do
+    case "$option" in
+        --dry-run) dry_run=true ;;
+        -h|--help) usage; exit 0 ;;
         *)
-            printf 'Unknown option: %s\n' "$1" >&2
+            printf 'Unknown option: %s\n' "$option" >&2
             usage >&2
             exit 1
             ;;
     esac
 done
 
-if [ -z "$show_extensions$clock_seconds$finder_path_bar$finder_search$hidden_files$screenshots_dir" ]; then
-    usage
-    exit 0
-fi
-
 if [ "$(uname -s)" != Darwin ]; then
     printf 'macOS preferences can only be applied on macOS.\n' >&2
     exit 1
 fi
 
-if [ -n "$screenshots_dir" ]; then
-    mkdir -p "$screenshots_dir"
+screenshots_dir="$HOME/Pictures/Screenshots"
+finder_changed=false
+clock_changed=false
+
+set_preference() {
+    local domain="$1" key="$2" type="$3" value="$4" component="$5"
+    local current write_value="$value"
+    # Readback uses 1/0, but the defaults CLI requires boolean words on writes.
+    if [ "$type" = -bool ]; then
+        case "$value" in
+            1) write_value=true ;;
+            0) write_value=false ;;
+        esac
+    fi
+    # Missing keys need an explicit value, just like mismatched settings.
+    if current=$(defaults read "$domain" "$key" 2>/dev/null) && [ "$current" = "$value" ]; then
+        printf 'Already set: %s %s = %s\n' "$domain" "$key" "$value"
+        return 0
+    fi
+
+    if [ "$dry_run" = true ]; then
+        printf 'Would set: %s %s = %s\n' "$domain" "$key" "$value"
+    else
+        printf 'Setting: %s %s = %s\n' "$domain" "$key" "$value"
+        defaults write "$domain" "$key" "$type" "$write_value"
+    fi
+    case "$component" in
+        finder) finder_changed=true ;;
+        clock) clock_changed=true ;;
+    esac
+}
+
+if [ ! -d "$screenshots_dir" ]; then
+    if [ "$dry_run" = true ]; then
+        printf 'Would create directory: %s\n' "$screenshots_dir"
+    else
+        mkdir -p "$screenshots_dir"
+    fi
 fi
 
-if [ -n "$show_extensions" ]; then
-    printf 'Setting filename extensions to %s\n' "$show_extensions"
-    defaults write NSGlobalDomain AppleShowAllExtensions -bool "$([ "$show_extensions" = on ] && printf true || printf false)"
+# defaults read represents enabled booleans as 1.
+set_preference NSGlobalDomain AppleShowAllExtensions -bool 1 finder
+set_preference com.apple.finder ShowPathbar -bool 1 finder
+set_preference com.apple.finder FXDefaultSearchScope -string SCcf finder
+set_preference com.apple.finder AppleShowAllFiles -bool 1 finder
+set_preference com.apple.screencapture location -string "$screenshots_dir" screenshots
+set_preference com.apple.menuextra.clock ShowSeconds -bool 1 clock
+
+if [ "$finder_changed" = true ]; then
+    if [ "$dry_run" = true ]; then
+        printf 'Would restart Finder once.\n'
+    else
+        killall Finder || true
+    fi
 fi
 
-if [ -n "$finder_path_bar" ]; then
-    printf 'Setting Finder path bar to %s\n' "$finder_path_bar"
-    defaults write com.apple.finder ShowPathbar -bool "$([ "$finder_path_bar" = on ] && printf true || printf false)"
-fi
-
-if [ -n "$finder_search" ]; then
-    printf 'Setting Finder search scope to %s\n' "$finder_search"
-    defaults write com.apple.finder FXDefaultSearchScope -string "$([ "$finder_search" = current ] && printf SCcf || printf SCev)"
-fi
-
-if [ -n "$hidden_files" ]; then
-    printf 'Setting hidden files to %s\n' "$hidden_files"
-    defaults write com.apple.finder AppleShowAllFiles -bool "$([ "$hidden_files" = on ] && printf true || printf false)"
-fi
-
-if [ -n "$show_extensions$finder_path_bar$finder_search$hidden_files" ]; then
-    killall Finder || true
-fi
-
-if [ -n "$screenshots_dir" ]; then
-    printf 'Setting screenshot folder to %s\n' "$screenshots_dir"
-    defaults write com.apple.screencapture location -string "$screenshots_dir"
-fi
-
-if [ -n "$clock_seconds" ]; then
-    printf 'Setting clock seconds to %s\n' "$clock_seconds"
-    defaults write com.apple.menuextra.clock ShowSeconds -bool "$([ "$clock_seconds" = on ] && printf true || printf false)"
-    printf 'The clock may need a logout and login to refresh.\n'
+if [ "$clock_changed" = true ]; then
+    printf 'The clock may need a logout and login to refresh after applying changes.\n'
 fi
